@@ -497,7 +497,6 @@
                     android:padding="@dimen/player_main_buttons_padding"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_fullscreen"
-                    android:visibility="gone"
                     android:contentDescription="@string/toggle_screen_orientation"
                     app:tint="@color/white"
                     tools:ignore="RtlHardcoded"

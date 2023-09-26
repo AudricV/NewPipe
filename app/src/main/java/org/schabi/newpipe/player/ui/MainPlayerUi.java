@@ -19,12 +19,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.os.Handler;
-import android.os.Looper;
-import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -90,8 +86,6 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     private boolean isFullscreen = false;
     private boolean isVerticalVideo = false;
     private boolean fragmentIsVisible = false;
-
-    private ContentObserver settingsContentObserver;
 
     private PlayQueueAdapter playQueueAdapter;
     private StreamSegmentAdapter segmentAdapter;
@@ -173,16 +167,6 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
                         .ifPresent(fragmentManager ->
                                 PlaylistDialog.showForPlayQueue(player, fragmentManager)));
 
-        settingsContentObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
-            @Override
-            public void onChange(final boolean selfChange) {
-                setupScreenRotationButton();
-            }
-        };
-        context.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), false,
-                settingsContentObserver);
-
         binding.getRoot().addOnLayoutChangeListener(this);
 
         binding.moreOptionsButton.setOnLongClickListener(v -> {
@@ -201,8 +185,6 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         binding.queueButton.setOnClickListener(null);
         binding.segmentsButton.setOnClickListener(null);
         binding.addToPlaylistButton.setOnClickListener(null);
-
-        context.getContentResolver().unregisterContentObserver(settingsContentObserver);
 
         binding.getRoot().removeOnLayoutChangeListener(this);
     }
@@ -272,7 +254,8 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         closeItemsList();
         showHideKodiButton();
         binding.fullScreenButton.setVisibility(View.GONE);
-        setupScreenRotationButton();
+        binding.screenRotationButton.setVisibility(View.VISIBLE);
+        setupScreenRotationButtonIcon();
         binding.resizeTextView.setVisibility(View.VISIBLE);
         binding.getRoot().findViewById(R.id.metadataView).setVisibility(View.VISIBLE);
         binding.moreOptionsButton.setVisibility(View.VISIBLE);
@@ -888,10 +871,7 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
     //////////////////////////////////////////////////////////////////////////*/
     //region Video size, orientation, fullscreen
 
-    private void setupScreenRotationButton() {
-        binding.screenRotationButton.setVisibility(globalScreenOrientationLocked(context)
-                || isVerticalVideo || DeviceUtils.isTablet(context)
-                ? View.VISIBLE : View.GONE);
+    private void setupScreenRotationButtonIcon() {
         binding.screenRotationButton.setImageDrawable(AppCompatResources.getDrawable(context,
                 isFullscreen ? R.drawable.ic_fullscreen_exit
                         : R.drawable.ic_fullscreen));
@@ -912,7 +892,7 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
                     PlayerServiceEventListener::onScreenRotationButtonClicked);
         }
 
-        setupScreenRotationButton();
+        setupScreenRotationButtonIcon();
     }
 
     public void toggleFullscreen() {
@@ -941,7 +921,7 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         binding.titleTextView.setVisibility(isFullscreen ? View.VISIBLE : View.GONE);
         binding.channelTextView.setVisibility(isFullscreen ? View.VISIBLE : View.GONE);
         binding.playerCloseButton.setVisibility(isFullscreen ? View.GONE : View.VISIBLE);
-        setupScreenRotationButton();
+        setupScreenRotationButtonIcon();
     }
 
     public void checkLandscape() {

@@ -21,7 +21,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.database.ContentObserver;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -30,7 +29,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -226,7 +224,6 @@ public final class VideoDetailFragment
 
     private TabAdapter pageAdapter;
 
-    private ContentObserver settingsContentObserver;
     @Nullable
     private PlayerService playerService;
     private Player player;
@@ -315,18 +312,6 @@ public final class VideoDetailFragment
         prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
 
         setupBroadcastReceiver();
-
-        settingsContentObserver = new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(final boolean selfChange) {
-                if (activity != null && !globalScreenOrientationLocked(activity)) {
-                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                }
-            }
-        };
-        activity.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), false,
-                settingsContentObserver);
     }
 
     @Override
@@ -401,7 +386,6 @@ public final class VideoDetailFragment
         PreferenceManager.getDefaultSharedPreferences(activity)
                 .unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
         activity.unregisterReceiver(broadcastReceiver);
-        activity.getContentResolver().unregisterContentObserver(settingsContentObserver);
 
         if (positionSubscriber != null) {
             positionSubscriber.dispose();
@@ -1885,11 +1869,8 @@ public final class VideoDetailFragment
             return;
         }
 
-        final int newOrientation = isLandscape
-                ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-
-        activity.setRequestedOrientation(newOrientation);
+        activity.setRequestedOrientation(isLandscape ? ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     /*
